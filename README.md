@@ -1,145 +1,72 @@
-# **Distributed Intrusion Detection & Response System (D-IDRS)**
+# **AI-Enhanced Deterioration Simulation and Restoration Planning** 
 
-This project implements a Sequential Multi-Agent Intrusion Detection & Response System built using the Google ADK (Agent Development Kit). The system simulates a real-world SOC (Security Operations Center) pipeline where AI agents collaboratively analyze raw alerts, take mitigation actions, generate visual summaries, and produce a final incident report. All operations flow through a shared session state to maintain context across the lifecycle.
+**Project summary**
+This project implements a Multi-Agent System (MAS) for simulating long-term physical deterioration of painted or decorated heritage elements (frescoes, panel paintings, illuminated manuscripts), producing a virtual restoration, and recommending a prioritized combined strategy of physical conservation and digital restoration. The system is agent-based, sequential, and designed for experimentation, scenario analysis, and decision support for conservators and collection managers.
 
-**Overview**
+**Project overview**
 
-D-IDRS follows a strict four-step security workflow:
-Correlation of incoming alerts using historical memory
-Mitigation using an IP blocking tool
-Infographic generation summarizing the incident
-Final report generation
-Each agent is specialized and connected through the session state, ensuring continuity and accuracy.
+This MAS simulates environmental conditions over long time horizons, models material degradation using physical and chemical decay models, synthesizes digitally restored images using deep learning, models cost and effectiveness for physical interventions, and optimizes combined digital+physical strategies under constraints (budget, ethics, priorities). The system is intended as a decision-support tool to explore "what if" scenarios (e.g., different climate futures, different conservation plans) and provide prioritized, actionable recommendations.
 
-**Architecture Summary**
+**High-level flow**
 
-Raw Alerts
-↓
-CorrelationAgent → produces incident_report
-↓
-MitigationAgent → uses BlockIPTool and produces mitigation_status
-↓
-InfographicAgent → generates image and produces security_image_result
-↓
-ReportingAgent → reads everything and generates final report
-↓
-Final Output to User or Dashboard
+Raw inputs (artifact metadata, baseline condition images, microclimate / scenario selection)
+→ Environmental Agent (EA)
+→ Material Degradation Agent (MDA)
+→ AI-Driven Digital Restoration Agent (DRA)
+→ Physical Intervention Agent (PIA)
+→ Prioritization & Simulation Agent (PSA)
+→ Outputs: prioritized intervention plan, virtually restored image(s), time-series degradation forecasts, cost estimates.
 
-**Agent Roles and Responsibilities**
+**Agent specifications**
+1. Environmental Agent (EA)
 
-*RootAgent (Sequential Orchestrator)*
-Type: SequentialAgent
-Role: Controls and executes the entire workflow. Ensures each step flows into the next in the order: Correlation → Mitigation → Infographic → Reporting.
-Concept Demonstrated: Sequential orchestration and agent workflow management.
+Role: Input provider for environmental forcing and long-term environmental simulation.
+Inputs: IPCC scenario parameters (or other climate model output), historical microclimate data, pollution models, site metadata (geolocation, indoor/outdoor, exposure).
+Outputs: Time-series environmental variables T(t) (temperature), H(t) (relative humidity), C(t) (pollutant concentration), resolution configurable (e.g., hourly, daily).
+Methods: Downscaling of climate scenarios, microclimate interpolation, pollutant accumulation modeling. Outputs are written to the shared session state for use by MDA.
 
-*CorrelationAgent*
-Type: LlmAgent
-Role: Triage and enrichment. Reads raw user alerts such as failed logins or suspicious network activity and analyzes them using historical data stored in its long-term memory.
-Input: Raw user alert payload
-Output: incident_report
-Concept Demonstrated: Long-term memory usage in ADK
+2. Material Degradation Agent (MDA)
 
-*MitigationAgent*
-Type: LlmAgent
-Role: Performs the actual security action. Interprets the incident_report and identifies the malicious IP address. Calls the custom tool BlockIPTTool to simulate blocking the IP.
-Input: incident_report
-Output: mitigation_status
-Concept Demonstrated: Custom tool invocation
+Role: Simulate physical and chemical deterioration from EA outputs.
+Inputs: T(t), H(t), C(t), artifact materials and stratigraphy metadata, baseline condition imagery.
+Outputs: Quantified damage metrics (percentage paint loss, crack length/depth, pigment fade percentages, biological growth risk), a time-indexed degradation record, and a 'Degraded State' image representing the artifact after the projection horizon (e.g., 50 years).
+Methods: Uses chemical kinetics (Arrhenius), salt crystallization models, moisture cycling stress models, biological growth probability models, and mapping functions that translate calculated physical damage to image-level degradations (noise, texture cracks, color shifts, flaking overlays). The degraded image is generated by deterministic procedural filters and stochastic perturbations informed by the damage map.
 
-*InfographicAgent*
-Type: LlmAgent
-Role: Converts the combined incident summary and mitigation status into a visually appealing infographic for management-level viewers.
-Input: incident_report and mitigation_status
-Output: security_image_result (URL to generated infographic)
-Concept Demonstrated: Built-in AI image generation
+3. AI-Driven Digital Restoration Agent (DRA)
 
-*ReportingAgent*
-Type: LlmAgent
-Role: Creates the final SOC report. It reads all saved session state keys: incident_report, mitigation_status, security_image_result, and the original user alerts. It synthesizes a complete text report summarizing the entire incident.
-Input: All previous state keys
-Output: Final text report
-Concept Demonstrated: Session and state management
+Role: Produce a virtual restoration of the degraded image and quantify visual improvement.
+Inputs: 'Degraded State' image from MDA, optionally original baseline image(s), restoration constraints (e.g., admissible reconstruction levels).
+Outputs: 'Virtually Restored' image, visual improvement metrics (PSNR, SSIM, perceptual similarity metrics), and an uncertainty/confidence map.
+Methods / Models: GANs, diffusion models, inpainting networks, vision transformers, or hybrid architectures trained or fine-tuned on restoration/inpainting datasets. The agent computes PSNR / SSIM relative to baseline where appropriate and/or uses no-reference perceptual metrics if no ground truth exists.
 
-**Agent Connectivity and Workflow Explanation**
+4. Physical Intervention Agent (PIA)
 
-The session state acts as the communication channel between agents. Each agent reads only the keys it requires and writes its own output back to the state for the next agent to use. The SequentialAgent ensures the correct order of execution.
+Role: Model interventions, costs, and long-term effectiveness on decay rates.
+Inputs: Damage report from MDA (extent, type, priority zones), artifact metadata, available conservation methods database.
+Outputs: Candidate intervention plans with itemized cost estimates (e.g., $/m² or $/hour), estimated reduction in future decay rates (ΔR_decay) and expected longevity of effect, and per-action constraints (reversibility, risk level).
+Methods: Matches damage types to interventions (e.g., consolidation for flaking, desalination for salt problems, microclimate controls), uses cost models and longevity models to output how much an intervention reduces projected degradation and for how long.
 
-Step 1: CorrelationAgent
-Reads: user_input
-Work: Correlates and analyzes alerts using Memory Bank
-Writes: state["incident_report"]
+5. Prioritization & Simulation Agent (PSA)
 
-Step 2: MitigationAgent
-Reads: state["incident_report"]
-Work: Determines malicious IP and triggers BlockIPTool
-Writes: state["mitigation_status"]
+Role: Decision-making hub that optimizes combined digital and physical interventions under constraints and preferences.
+Inputs: Visual improvement metric and virtually restored image from DRA; costs and effectiveness from PIA; budget and user-defined priorities (visual quality vs. stability, ethical constraints).
+Outputs: Ranked/prioritized list of actionable tasks with expected benefits, costs, schedule recommendations, and scenario comparisons. Also returns alternative plans under different budget or risk tolerances.
+Methods: Multi-Criteria Decision Analysis (MCDA), integer programming, knapsack-like optimization or Pareto-front generation; supports sensitivity analysis and scenario exploration. PSA can request re-runs from other agents for alternative scenarios (e.g., "what if we apply intervention X instead of Y?").
 
-Step 3: InfographicAgent
-Reads: state["incident_report"], state["mitigation_status"]
-Work: Creates security infographic
-Writes: state["security_image_result"]
+**Ethical considerations and limitations**
+Virtual restorations are reconstructions with uncertainties and must be clearly labelled as non-authentic visualizations. They should not be used as replacements for real conservation judgment.
+Interventions recommended by the system are decision-support outputs and should be reviewed by qualified conservators before implementation.
+Data provenance and model versioning must be maintained to ensure traceability.
+Respect legal and cultural restrictions about the treatment and depiction of heritage objects.
 
-Step 4: ReportingAgent
-Reads: All previous state entries
-Work: Generates complete SOC-style incident report
-Returns: Final output sent to user dashboard
+**Extensions and future work**
 
-**Flask Dashboard**
+Integrate more detailed spectral pigment models and multispectral imaging inputs.
 
-A simple Flask dashboard is included to visualize:
-Raw alerts
-Generated incident report
-Mitigation status
-Infographic image
+Online learning: adapt degradation model parameters using observed real-world monitoring data.
 
-**Final SOC report**
-This provides observability and demonstrates how multi-agent systems can be integrated into real applications.
+Human-in-the-loop workflows with conservator annotation feedback for refinement.
 
-*Key Features*
-Fully sequential multi-agent architecture
-Long-term memory for threat correlation
-Custom tool for IP blocking
-Automated infographic generation
-End-to-end SOC-style reporting
-Flask interface for visualization
-Extensible mdular ADK setup
+Automated sensitivity analysis UI to explore trade-offs between cost, visibility, and longevity.
 
-**Example Project Structure**
-
-project/
-agents/
-root_agent.py
-correlation_agent.py
-mitigation_agent.py
-infographic_agent.py
-reporting_agent.py
-tools/
-block_ip_tool.py
-memory/
-historical_threats.json
-app.py (Flask dashboard)
-run.py
-README.md
-
-**How to Run**
-
-Install dependencies:
-pip install -r requirements.txt
-
-Start the system:
-python run.py
-
-Navigate to:
-http://localhost:5000
-
-**Future Enhancements**
-
-Add anomaly detection ML model
-
-More mitigation tools (firewall updates, user lockout)
-
-Real-time SIEM alert ingestion
-
-Authentication for dashboard
-
-Enhanced memory indexing for faster correlation
+Integrate with facility control systems for automatic microclimate mitigation testing (simulation only; no direct actuations without human sign-off).
