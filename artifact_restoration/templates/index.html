@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artifact Restoration - Multi-Agent System</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Crimson+Text:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Text', 'Georgia', serif;
+            background: linear-gradient(rgba(74, 63, 53, 0.70), rgba(107, 93, 82, 0.75)),
+            url('{{ url_for("static", filename="images/hampi-temple.jpg") }}') center/cover fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: linear-gradient(to bottom, #FFF8E7 0%, #F5E6D3 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            border: 3px solid #8B7355;
+        }
+
+        h1 {
+            font-family: 'Libre Baskerville', serif;
+            color: #4A3F35;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(139, 115, 85, 0.2);
+        }
+
+        .subtitle {
+            color: #8B7355;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.05em;
+            font-style: italic;
+        }
+
+        .agent-flow {
+            background: linear-gradient(to right, #D4C4B0 0%, #C9B99F 100%);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 2px solid #A0826D;
+        }
+
+        .agent-flow h3 {
+            font-family: 'Libre Baskerville', serif;
+            color: #4A3F35;
+            font-size: 1em;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .flow-icons {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            font-size: 0.95em;
+            color: #6B5D52;
+        }
+
+        .flow-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .arrow {
+            color: #A0826D;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-family: 'Libre Baskerville', serif;
+            display: block;
+            margin-bottom: 8px;
+            color: #4A3F35;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+
+        .drop-zone {
+            border: 3px dashed #A0826D;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(to bottom, #FFFBF0 0%, #F0E5D8 100%);
+            position: relative;
+        }
+
+        .drop-zone:hover {
+            background: linear-gradient(to bottom, #F5E6D3 0%, #E8D9C5 100%);
+            border-color: #8B7355;
+            box-shadow: 0 5px 15px rgba(139, 115, 85, 0.2);
+        }
+
+        .drop-zone.dragover {
+            background: linear-gradient(to bottom, #E8D9C5 0%, #D4C4B0 100%);
+            border-color: #6B5D52;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-text {
+            color: #8B7355;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .drop-zone-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .file-name {
+            color: #6B5D52;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            font-family: 'Crimson Text', serif;
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #C9B99F;
+            border-radius: 8px;
+            font-size: 1.05em;
+            transition: border-color 0.3s;
+            background: #FFFBF0;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #8B7355;
+            background: #FFF;
+        }
+
+        .helper-text {
+            font-size: 0.9em;
+            color: #A0826D;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        button {
+            font-family: 'Libre Baskerville', serif;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #8B7355 0%, #6B5D52 100%);
+            color: #FFF8E7;
+            border: 2px solid #4A3F35;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(74, 63, 53, 0.4);
+            background: linear-gradient(135deg, #6B5D52 0%, #4A3F35 100%);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #C9B99F;
+            cursor: not-allowed;
+            transform: none;
+            border-color: #A0826D;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-size: 1.05em;
+        }
+
+        .status.success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 2px solid #81C784;
+        }
+
+        .status.error {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 2px solid #E57373;
+        }
+
+        .status.loading {
+            background: #FFF8E7;
+            color: #8B7355;
+            border: 2px solid #C9B99F;
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(139, 115, 85, .2);
+            border-radius: 50%;
+            border-top-color: #8B7355;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🏛️ Artifact Restoration</h1>
+        <p class="subtitle">Multi-Agent Analysis System</p>
+
+        <div class="agent-flow">
+            <h3>AGENT WORKFLOW</h3>
+            <div class="flow-icons">
+                <div class="flow-icon">
+                    <span>🔧</span>
+                    <span>Restoration</span>
+                </div>
+                <span class="arrow">→</span>
+                <div class="flow-icon">
+                    <span>📚</span>
+                    <span>Data Fetcher</span>
+                </div>
+                <span class="arrow">→</span>
+                <div class="flow-icon">
+                    <span>🌍</span>
+                    <span>Environmental</span>
+                </div>
+            </div>
+        </div>
+
+        <form id="artifactForm">
+            <div class="form-group">
+                <label>Artifact Image</label>
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">🖼️</div>
+                    <div class="drop-zone-text">Drag & Drop Image Here</div>
+                    <div class="helper-text">or click to browse</div>
+                    <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;" required>
+                    <img id="imagePreview" class="image-preview" alt="Preview">
+                    <div class="file-name" id="fileName"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="timeSpan">Environmental Analysis Time Span (years)</label>
+                <input type="number" id="timeSpan" name="time_span" value="10" min="1" max="100" required>
+                <div class="helper-text">Predict environmental impact over specified years</div>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                🚀 Process Artifact
+            </button>
+        </form>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('artifactForm');
+        const statusDiv = document.getElementById('status');
+        const submitBtn = document.getElementById('submitBtn');
+        const dropZone = document.getElementById('dropZone');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileName = document.getElementById('fileName');
+
+        let selectedFile = null;
+
+        // Click to browse
+        dropZone.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        // File selected via browse
+        imageInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file) return;
+
+            selectedFile = file;
+            fileName.textContent = file.name;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!selectedFile) {
+                statusDiv.className = 'status error';
+                statusDiv.style.display = 'block';
+                statusDiv.innerHTML = '❌ Please select an image file';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+            formData.append('time_span', document.getElementById('timeSpan').value);
+
+            // Show loading state
+            statusDiv.className = 'status loading';
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<span class="spinner"></span>Processing through multi-agent system... This may take a moment.';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/process_artifact', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = '✅ Processing complete! Redirecting to dashboard...';
+
+                    // Store results and redirect
+                    sessionStorage.setItem('artifactResults', JSON.stringify(data.results));
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `❌ Error: ${data.error}`;
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ Network error: ${error.message}`;
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
