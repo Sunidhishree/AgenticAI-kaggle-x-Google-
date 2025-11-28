@@ -1,6 +1,6 @@
 """
 Flask Application for Artifact Restoration Multi-Agent System
-Using Google ADK (Agent Development Kit)
+Using Google ADK (Agent Development Kit) with Sequential Agents, MCP, and Context Engineering
 """
 
 from flask import Flask, render_template, request, jsonify, make_response
@@ -13,8 +13,8 @@ from werkzeug.utils import secure_filename
 # Import setup first to ensure authentication
 from setup_adk import GEMINI_API_KEY
 
-# Import ADK agents
-from agents.adk_root_agent import RootAgent
+# Import new ADK Orchestrator with sequential agents
+from adk_orchestrator import ADKOrchestrator
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS
@@ -25,10 +25,9 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Initialize root agent once
-print("[INIT] Initializing ADK Multi-Agent System...")
-root_agent = RootAgent()
-print("[OK] Application ready!")
+# Initialize ADK Orchestrator with sequential agents, MCP, and context engineering
+orchestrator = ADKOrchestrator()
+print("[OK] Application ready with ADK Sequential Agents!")
 
 
 @app.route('/')
@@ -77,53 +76,47 @@ def process_artifact():
             original_image_b64 = base64.b64encode(image_data).decode('utf-8')
         
         time_span = int(request.form.get('time_span', 10))
+        restoration_level = request.form.get('restoration_level', 'medium')
         
-        # Process with multi-agent system
-        results = root_agent.process_artifact(filepath, time_span)
+        # Process with ADK Orchestrator (sequential agents + context engineering)
+        results = orchestrator.process_artifact(filepath, restoration_level, time_span)
+        
+        # Extract results from sequential agent outputs
+        vision_data = results.get('vision_analysis', {})
+        restoration_data = results.get('restoration', {})
+        historical_data = results.get('historical_context', {})
+        environmental_data = results.get('environmental_prediction', {})
         
         # Format response to match frontend expectations
         response_data = {
-            'success': True,
+            'success': results.get('workflow_status') == 'completed',
             'results': {
                 'workflow_status': results.get('workflow_status'),
+                'agents_executed': results.get('agents_executed', []),
+                'context_summary': results.get('context_summary', {}),
                 'original_image': original_image_b64,
                 'restored_image': results.get('restored_image'),
                 'time_span': time_span,
                 'restoration': {
-                    'status': results.get('restoration', {}).get('status'),
-                    'message': 'Restoration completed successfully',
-                    'response': results.get('restoration', {}).get('analysis', ''),
-                    'restoration_details': f"Restoration Level: {results.get('restoration', {}).get('restoration_level', 'medium')}"
+                    'status': restoration_data.get('status', 'error'),
+                    'message': 'AI-generated pristine restoration completed' if restoration_data.get('status') == 'success' else 'Restoration failed',
+                    'response': vision_data.get('identification', ''),
+                    'restoration_details': f"Method: {restoration_data.get('restoration_method', 'N/A')} | Level: {restoration_level}",
+                    'artifact_type': vision_data.get('type', 'Unknown'),
+                    'condition': vision_data.get('condition', 'Unknown')
                 },
                 'data_fetcher': {
-                    'status': 'success' if results.get('data_fetcher', {}).get('status') == 'success' else 'error',
-                    'message': 'Historical data retrieved',
-                    'historical_data': results.get('data_fetcher', {}).get('historical_context', '')
+                    'status': historical_data.get('status', 'error'),
+                    'message': 'Historical context retrieved via ADK' if historical_data.get('status') == 'success' else 'Historical retrieval failed',
+                    'historical_data': historical_data.get('historical_context', '')
                 },
                 'environmental': {
-                    'status': 'success' if results.get('environmental', {}).get('status') == 'success' else 'error',
-                    'message': 'Environmental analysis completed',
+                    'status': environmental_data.get('status', 'error'),
+                    'message': f'Environmental predictions for {time_span} years via ADK' if environmental_data.get('status') == 'success' else 'Environmental prediction failed',
                     'time_span': time_span,
-                    'environmental_analysis': results.get('environmental', {}).get('environmental_predictions', '')
+                    'environmental_analysis': environmental_data.get('predictions', '')
                 },
-                'degradation_predictions': [
-                    {
-                        'year': int(time_span * 0.25),
-                        'condition': f"{results.get('environmental', {}).get('degradation_data', {}).get('degradation_percentage', 0) * 0.25:.1f}% degradation - Early stage"
-                    },
-                    {
-                        'year': int(time_span * 0.5),
-                        'condition': f"{results.get('environmental', {}).get('degradation_data', {}).get('degradation_percentage', 0) * 0.5:.1f}% degradation - Mid stage"
-                    },
-                    {
-                        'year': int(time_span * 0.75),
-                        'condition': f"{results.get('environmental', {}).get('degradation_data', {}).get('degradation_percentage', 0) * 0.75:.1f}% degradation - Advanced stage"
-                    },
-                    {
-                        'year': time_span,
-                        'condition': results.get('environmental', {}).get('degradation_data', {}).get('condition', 'Unknown')
-                    }
-                ]
+                'degradation_predictions': environmental_data.get('degradation_timeline', [])
             }
         }
         
@@ -165,13 +158,17 @@ def health():
 
 
 if __name__ == '__main__':
-    print("\n" + "="*60)
+    print("\n" + "="*70)
     print("ARTIFACT RESTORATION SYSTEM")
-    print("    Powered by Google ADK Multi-Agent Architecture")
-    print("="*60)
+    print("    Powered by Google ADK Sequential Agents + MCP + Context Engineering")
+    print("="*70)
     print("\n[SERVER] Starting Flask server...")
     print("[URL] Open http://localhost:5000 in your browser")
-    print("[AGENTS] Restoration -> Data Fetcher -> Environmental")
-    print("\n[INFO] Debug mode disabled (Windows ADK compatibility)")
+    print("\n[ARCHITECTURE]")
+    print("  Sequential Agents: Vision → Restoration → Historical → Environmental")
+    print("  Context Engineering: ENABLED (agent-to-agent handoffs)")
+    print("  MCP Tools: ENABLED (Model Context Protocol)")
+    print("  ADK Runners: ENABLED (Historical + Environmental agents)")
+    print("\n[INFO] Debug mode disabled (Windows compatibility)")
     print("\n")
     app.run(host='0.0.0.0', port=5000, debug=False)
