@@ -296,23 +296,6 @@ pristine_image = dalle3_generate_pristine(
 - **DALL-E 3**: [OpenAI Platform Docs](https://platform.openai.com/docs/guides/images)
 - **MCP Protocol**: [Model Context Protocol](https://modelcontextprotocol.io/)
 
-### Community
-- **Issues**: [GitHub Issues](https://github.com/Sunidhishree/AgenticAI-kaggle-x-Google-/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Sunidhishree/AgenticAI-kaggle-x-Google-/discussions)
-- **Email**: sunidhi.shree@example.com
-
-### Contributing
-Pull requests welcome! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new features
-4. Update documentation
-5. Submit PR with clear description
-
-### License
-MIT License - See LICENSE file for details
-
----
 
 ## 🏆 Acknowledgments
 
